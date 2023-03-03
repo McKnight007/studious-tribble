@@ -1,0 +1,161 @@
+#!/bin/bash        
+
+#The above line should included to indicate a bash file for the #terminal
+
+# while-menu-dialog: a menu driven system information program
+DIALOG_CANCEL=1 # used when user presses cancel 
+DIALOG_ACCEPT=0 #used when user presses enter
+DIALOG_ESC=255 #used when user hits escape button
+HEIGHT=0
+WIDTH=0
+
+
+#Function for displaying time
+
+show_time() {
+  dialog --title "$1" \
+    --no-collapse \
+    --msgbox "$(date)" 0 0  #The date in brackets calls the date 
+    #the 0 0 after msgbox ensures all the content is uniformly enlosed 
+}
+
+
+#Function created to display the calendar and take user input
+
+display_calendar(){
+#The forms keyword allows for multiple fields to be fed with data.  
+ EVENT_CAL=$(zenity --forms --title="Event Organiser" \
+	--text="Enter new event." \
+	--separator="," \
+	--add-entry="Name of event" \
+	--add-entry="Details" \
+	--add-calendar="Events" >>Events.csv) 
+	
+	#data is then appended to the file in form of .csv for easy display
+	
+	#$EVENT_CAL>>Events.csv
+	
+	
+	
+	zenity --info --text="Event added successfully. For reference, check the Events file "\
+		--width=300 --height=300 
+		
+	#Alerting user that data has been added successfully
+		
+	# The double "greater than" sign assigns the entries into the specified pre-existing .csv file.. Csv was chosen because of 		its neatness of display 
+
+
+}
+
+
+#Function for performing the deleting function
+
+delete_function(){
+	#assigns the file and directory to VAR_DEL variable
+	VAR_DEL=$(zenity --file-selection\
+		--title="Which file would you like to delete?"\
+		--width=300 --height=300 );
+		if [ -z "$VAR_DEL" ];
+			then 
+			zenity --info --text="Sorry no file selected"\
+			--width=300 --height=300
+			
+		else
+		#Asking for confirmation from user
+		zenity --question --text="Are you sure you want to delete $VAR_DEL"\
+		--width=300 --height=300
+		case $? in
+			$DIALOG_ACCEPT)
+				rm "$VAR_DEL"
+				zenity --info --text="Deleted successfully"\
+				--width=300 --height=300 ;;
+			
+			$DIALOG_CANCEL)
+				zenity --info --text="Delete process cancelled"\
+				--width=300 --height=300;;
+		esac
+		fi
+}
+
+
+#Function for finding the directory selected by the user
+
+directory_finder(){ 
+#first, ask user name of directory where all files are present 
+DIR_TEMP=$(zenity  --entry \
+	--text="Name of directory?" \
+	--width=200 --height=200 )
+exit_status=$?
+case $exit_status in
+    $DIALOG_CANCEL)
+      clear
+      echo "Program terminated."
+      exit
+      ;;
+    $DIALOG_ESC)
+      clear
+      echo "Program aborted." >&2
+      exit 1
+      ;;
+  esac
+  
+
+cd "/home/mcknight"    #Set default directory
+
+if [ -z "$DIR_TEMP" ] || [ ! -e "$DIR_TEMP" ] ; then 
+#OR operator used to move to current directory if either the code directory input is left blank or does not exist
+#Invoiking the delete function
+	delete_function
+	
+else [ -e "$VAR_DIR" ]
+	VAR_DIR="/home/$USER/$DIR_TEMP"
+	cd "$VAR_DIR"
+	#Invoking the delete function
+	delete_function
+	
+	
+	
+fi
+}
+while true; do
+  exec 3>&1
+  selection=$(dialog \
+    --backtitle "Marcelino and Mark Coursework 2" \
+    --title "Menu" \
+    --clear \
+    --cancel-label "Exit" \
+    --menu "Please select:"  $HEIGHT $WIDTH  4\
+    "1" "Date" \
+    "2" "Calendar" \
+    "3" "Delete Functions" \
+    2>&1 1>&3)
+  exit_status=$?
+  exec 3>&-
+  case $exit_status in
+    $DIALOG_CANCEL)
+      clear
+      echo "Program terminated."
+      exit
+      ;;
+    $DIALOG_ESC)
+      clear
+      echo "Program aborted." >&2
+      exit 1
+      
+      ;;
+  esac
+  case $selection in
+    1 )
+     #Invoking of the functions
+      show_time "Date and Time" 
+      ;;
+    2 )
+      display_calendar "Calendar"
+      
+      ;;
+    3 )
+      directory_finder "DELETER"
+      
+      ;;
+  esac
+done
