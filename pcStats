@@ -1,0 +1,53 @@
+#!/bin/bash
+
+ 
+function display_menu(){
+selected_menu=$(dialog --clear --menu "Please select:" 0 0 0 1 "Operating System type" 2 "Computer CPU Information" 3 "Memory information" 4 "Hard disk information" 5 "File system (mounted)" 6 "Quit" --output-fd 1) 
+
+
+echo $selected_menu 
+    case $selected_menu  in
+      1)
+        dialog --title "Operating System" --textbox /etc/os-release 0 0
+        display_menu                 
+        ;;
+      2)
+      
+        dialog --ok-label Cancel --title "Computer CPU Information" --tailbox "/proc/cpuinfo" 19 69 
+        display_menu
+
+        ;;
+      3)
+      	
+        meminfo=$(lsof)
+        dialog --title "Memory Information" --tailbox "/proc/meminfo" 15 60
+        display_menu
+	
+        ;;
+        
+      4) 
+        result=$(df -h)
+        dialog --title "Hard disk information" --tailbox "$result" 0 0
+	display_menu
+        ;;
+        
+      5)
+        kernel_info=$(findmnt)
+        user_info=$(w | cut -d ' ' -f1 | grep -v USER | xargs -n1) 
+        echo $kernel_info
+        dialog --title "File System: " --msgbox "Kernel info: $kernel_info \n User info: $user_info" 19 69
+        
+        display_menu
+        ;;
+        
+      0)
+        break
+        ;;
+    esac
+ }
+ 
+ display_menu
+ 
+ clear
+echo "Program terminated."
+
